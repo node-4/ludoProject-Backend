@@ -1,4 +1,5 @@
 const userModel = require("../models/userModel");
+const contest = require("../models/contest");
 const jwt = require("jsonwebtoken");
 exports.socialLogin = async (req, res) => {
         try {
@@ -6,7 +7,7 @@ exports.socialLogin = async (req, res) => {
                 if (userData) {
                         let updateResult = await userModel.findByIdAndUpdate({ _id: userData._id }, { $set: { deviceToken: req.body.deviceToken } }, { new: true });
                         if (updateResult) {
-                                var token = jwt.sign({ _id: updateResult._id, socialId: updateResult.socialId }, 'DMandir', { expiresIn: '365d' });
+                                var token = jwt.sign({ _id: updateResult._id }, 'DMandir', { expiresIn: '365d' });
                                 let obj = {
                                         _id: updateResult._id,
                                         firstName: updateResult.firstName,
@@ -22,12 +23,13 @@ exports.socialLogin = async (req, res) => {
                         req.body.lastName = req.body.lastName;
                         req.body.countryCode = req.body.countryCode;
                         req.body.mobileNumber = req.body.mobileNumber;
-                        req.body.email = req.body.email;
+                        let email = req.body.email;
+                        req.body.email = email.split(" ").join("").toLowerCase();
                         req.body.socialId = req.body.socialId;
                         req.body.socialType = req.body.socialType;
                         let saveUser = await userModel(req.body).save();
                         if (saveUser) {
-                                var token = jwt.sign({ _id: saveUser._id, socialId: saveUser.socialId }, 'DMandir', { expiresIn: '365d' });
+                                var token = jwt.sign({ _id: saveUser._id }, 'DMandir', { expiresIn: '365d' });
                                 let obj = {
                                         _id: saveUser._id,
                                         firstName: saveUser.firstName,
@@ -46,16 +48,20 @@ exports.socialLogin = async (req, res) => {
 };
 exports.loginWithPhone = async (req, res) => {
         try {
-                const phone = await userModel.findOne({ mobileNumber: req.body.mobileNumber });
-                if (phone) {
-                        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-                        let update = await userModel.findByIdAndUpdate({ _id: phone._id }, { $set: { otp: otp } }, { new: true });
-                        return res.status(200).send({ status: 200, message: "Login successfully ", data: update, });
+                if (req.body.mobileNumber != (null || undefined)) {
+                        const phone = await userModel.findOne({ mobileNumber: req.body.mobileNumber });
+                        if (phone) {
+                                const otp = Math.floor(100000 + Math.random() * 900000).toString();
+                                let update = await userModel.findByIdAndUpdate({ _id: phone._id }, { $set: { otp: otp } }, { new: true });
+                                return res.status(200).send({ status: 200, message: "Login successfully ", data: update, });
+                        } else {
+                                const otp = Math.floor(100000 + Math.random() * 900000).toString();
+                                req.body.otp = otp;
+                                const newUser = await userModel.create(req.body);
+                                return res.status(200).send({ status: 200, message: "Login successfully ", data: newUser, });
+                        }
                 } else {
-                        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-                        req.body.otp = otp;
-                        const newUser = await userModel.create(req.body);
-                        return res.status(200).send({ status: 200, message: "Login successfully ", data: newUser, });
+                        return res.status(401).send({ status: 401, message: "Please provide mobile number.", data: {}, });
                 }
         } catch (error) {
                 console.log(error);
@@ -89,5 +95,95 @@ exports.verifyOtp = async (req, res) => {
         } catch (err) {
                 console.log(err.message);
                 return res.status(500).send({ error: "internal server error" + err.message });
+        }
+};
+exports.joinContest = async (req, res) => {
+        try {
+                const findContest = await contest.findById({ _id: req.params.contestId });
+                const user = await userModel.findById({ _id: req.user._id });
+                if (!contest || !user) {
+                        return res.status(404).json({ status: 404, message: 'Contest or user not found.' });
+                }
+                if (user.deposite < findContest.entryFee) {
+                        return res.status(400).json({ status: 400, message: 'Insufficient balance.' });
+                }
+                if (findContest.joined == findContest.noOfuser) {
+                        return res.status(401).json({ status: 401, message: 'Contest full now.' });
+                }
+                if (findContest.users.includes(req.user._id)) {
+                        return res.status(400).json({ status: 400, message: 'User is already in the contest.' });
+                }
+                user.deposite -= findContest.entryFee;
+                await user.save();
+                const adminUser = await userModel.findOne({ userType: 'ADMIN' });
+                adminUser.wallet += findContest.entryFee;
+                await adminUser.save();
+                findContest.joined += 1;
+                findContest.users.push(req.user._id);
+                await findContest.save();
+                return res.status(200).json({ status: 200, message: 'User joined the contest successfully.' });
+        } catch (error) {
+                console.error(error);
+                res.status(500).json({ message: 'Internal server error.' });
+        }
+};
+exports.winnerContest = async (req, res) => {
+        try {
+                const findContest = await contest.findById({ _id: req.body.contestId });
+                if (!findContest) {
+                        return res.status(404).json({ status: 404, message: 'Contest not found.' });
+                }
+                const user = await userModel.findById({ _id: req.body.userId });
+                if (!user) {
+                        return res.status(404).json({ status: 404, message: 'user not found.' });
+                }
+                user.winning += findContest.firstPrize;
+                await user.save();
+                findContest.winner = user._id;
+                await findContest.save();
+                return res.status(200).json({ status: 200, message: 'Winned the contest.' });
+        } catch (error) {
+                console.error(error);
+                res.status(500).json({ message: 'Internal server error.' });
+        }
+};
+exports.secondPrizeContest = async (req, res) => {
+        try {
+                const findContest = await contest.findById({ _id: req.body.contestId });
+                if (!findContest) {
+                        return res.status(404).json({ status: 404, message: 'Contest not found.' });
+                }
+                const user = await userModel.findById({ _id: req.body.userId });
+                if (!user) {
+                        return res.status(404).json({ status: 404, message: 'user not found.' });
+                }
+                user.winning += findContest.secondPrize;
+                await user.save();
+                findContest.IInd = user._id;
+                await findContest.save();
+                return res.status(200).json({ status: 200, message: 'Winned the contest.' });
+        } catch (error) {
+                console.error(error);
+                res.status(500).json({ message: 'Internal server error.' });
+        }
+};
+exports.thirdPrizeContest = async (req, res) => {
+        try {
+                const findContest = await contest.findById({ _id: req.body.contestId });
+                if (!findContest) {
+                        return res.status(404).json({ status: 404, message: 'Contest not found.' });
+                }
+                const user = await userModel.findById({ _id: req.body.userId });
+                if (!user) {
+                        return res.status(404).json({ status: 404, message: 'user not found.' });
+                }
+                user.winning += findContest.thirdPrize;
+                await user.save();
+                findContest.IIInd = user._id;
+                await findContest.save();
+                return res.status(200).json({ status: 200, message: 'Winned the contest.' });
+        } catch (error) {
+                console.error(error);
+                res.status(500).json({ message: 'Internal server error.' });
         }
 };

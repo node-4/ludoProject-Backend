@@ -41,11 +41,29 @@ var userSchema = new schema({
         password: {
                 type: String
         },
-        userType: {
-                type: String,
-        },
         status: {
                 type: String,
+        },
+        wallet: {
+                type: Number,
+                default: 0,
+        },
+        deposite: {
+                type: Number,
+                default: 0,
+        },
+        winning: {
+                type: Number,
+                default: 0,
+        },
+        bonus: {
+                type: Number,
+                default: 0,
+        },
+        userType: {
+                type: String,
+                enum: ["USER", "ADMIN"],
+                default: "USER"
         },
 },
         { timestamps: true });
