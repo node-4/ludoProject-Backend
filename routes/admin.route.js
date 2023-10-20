@@ -11,4 +11,5 @@ module.exports = (app) => {
         app.get("/api/v1/admin/userList", auth.userList);
         app.get("/api/v1/admin/User/:id", auth.getUserById);
         app.delete("/api/v1/admin/User/:id", [authJwt.verifyToken], auth.deleteUser);
+        app.post("/api/v1/admin/addBonus/:id", [authJwt.verifyToken], auth.addBonusTouser);
 }
