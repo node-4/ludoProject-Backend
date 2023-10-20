@@ -1,5 +1,6 @@
 const userModel = require("../models/userModel");
 const contest = require("../models/contest");
+const notification = require("../models/notification");
 const jwt = require("jsonwebtoken");
 exports.socialLogin = async (req, res) => {
         try {
@@ -82,9 +83,7 @@ exports.verifyOtp = async (req, res) => {
                         return res.status(400).json({ message: "Invalid OTP" });
                 }
                 const updated = await userModel.findByIdAndUpdate({ _id: user._id }, { accountVerification: true }, { new: true });
-                const accessToken = await jwt.sign({ id: user._id }, 'DMandir', {
-                        expiresIn: '365d',
-                });
+                const accessToken = await jwt.sign({ id: user._id }, 'DMandir', { expiresIn: '365d', });
                 let obj = {
                         userId: updated._id,
                         otp: updated.otp,
@@ -186,4 +185,103 @@ exports.thirdPrizeContest = async (req, res) => {
                 console.error(error);
                 res.status(500).json({ message: 'Internal server error.' });
         }
+};
+exports.winnerContestlist = async (req, res) => {
+        try {
+                const user = await userModel.findById({ _id: req.user._id });
+                if (!user) {
+                        return res.status(404).json({ status: 404, message: 'user not found.' });
+                }
+                const findContest = await contest.find({ winner: user._id });
+                if (findContest.length == 0) {
+                        return res.status(404).json({ status: 404, message: 'Contest not found.', });
+                }
+                return res.status(200).json({ status: 200, message: 'Winned the contest.', data: findContest });
+        } catch (error) {
+                console.error(error);
+                res.status(500).json({ message: 'Internal server error.' });
+        }
+};
+exports.lossContestlist = async (req, res) => {
+        try {
+                const user = await userModel.findById({ _id: req.user._id });
+                if (!user) {
+                        return res.status(404).json({ status: 404, message: 'user not found.' });
+                }
+                const findContest = await contest.find({ $or: [{ IInd: user._id }, { IIIrd: user._id }] });
+                if (findContest.length == 0) {
+                        return res.status(404).json({ status: 404, message: 'Contest not found.', });
+                }
+                return res.status(200).json({ status: 200, message: 'Winned the contest.', data: findContest });
+        } catch (error) {
+                console.error(error);
+                res.status(500).json({ message: 'Internal server error.' });
+        }
+};
+exports.notificationList = async (req, res) => {
+        try {
+                const user = await userModel.findById({ _id: req.user._id });
+                if (!user) {
+                        return res.status(404).json({ status: 404, message: 'user not found.' });
+                }
+                const findContest = await notification.find({ userId: user._id });
+                if (findContest.length == 0) {
+                        return res.status(404).json({ status: 404, message: 'Notification not found.', });
+                }
+                return res.status(200).json({ status: 200, message: 'Notification the contest.', data: findContest });
+        } catch (error) {
+                console.error(error);
+                res.status(500).json({ message: 'Internal server error.' });
+        }
+};
+exports.addMoney = async (req, res) => {
+        try {
+                const data = await userModel.findOne({ _id: req.user._id, });
+                if (data) {
+                        let update = await userModel.findByIdAndUpdate({ _id: data._id }, { $set: { deposite: data.deposite + parseInt(req.body.balance) } }, { new: true });
+                        if (update) {
+                                let obj = {
+                                        user: req.user._id,
+                                        date: Date.now(),
+                                        amount: req.body.balance,
+                                        type: "Credit",
+                                        relatedPayments: "AddMoney"
+                                };
+                                const data1 = await transactionModel.create(obj);
+                                if (data1) {
+                                        return res.status(200).json({ status: 200, message: "Money has been added.", data: update, });
+                                }
+                        }
+                } else {
+                        return res.status(404).json({ status: 404, message: "No data found", data: {} });
+                }
+        } catch (error) {
+                console.log(error);
+                return res.status(501).send({ status: 501, message: "server error.", data: {}, });
+        }
+};
+exports.getWallet = async (req, res) => {
+        try {
+                const data = await User.findOne({ _id: req.user._id, });
+                if (data) {
+                        let obj = {
+                                deposite: data.deposite,
+                                winning: data.winner,
+                                bonus: data.bonus,
+                        }
+                        return res.status(200).json({ message: "get Wallet", data: obj });
+                } else {
+                        return res.status(404).json({ status: 404, message: "No data found", data: {} });
+                }
+        } catch (error) {
+                console.log(error);
+                return res.status(501).send({ status: 501, message: "server error.", data: {}, });
+        }
+};
+exports.getContests = async (req, res) => {
+        const categories = await contest.find({ status: "ACTIVE" })
+        if (categories.length > 0) {
+                return res.status(201).json({ message: "Contest Found", status: 200, data: categories, });
+        }
+        return res.status(201).json({ message: "Contest not Found", status: 404, data: {}, });
 };

@@ -10,14 +10,13 @@ const verifyToken = (req, res, next) => {
     }
     jwt.verify(token, 'DMandir', async (err, decoded) => {
         if (err) {
-            console.log(err);
             return res.status(401).send({ message: "Session has been expired! !", });
         }
-        const user = await User.findOne({ _id: decoded._id });
-        if (!user) {
+        const user1 = await User.findOne({ $or: [{ _id: decoded.id }, { _id: decoded._id }] });
+        if (!user1) {
             return res.status(400).send({ message: "The user that this token belongs to does not exist" });
         }
-        req.user = user;
+        req.user = user1;
         next();
     });
 };

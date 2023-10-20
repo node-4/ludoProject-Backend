@@ -11,9 +11,6 @@ var notificationModel = new Schema({
         body: {
                 type: String
         },
-        image: {
-                type: String
-        },
         date: {
                 type: String
         },
