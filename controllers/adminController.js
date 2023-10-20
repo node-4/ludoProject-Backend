@@ -58,7 +58,7 @@ exports.AddContest = async (req, res) => {
                         const findUser = await User.find({ userType: "USER" });
                         if (findUser.length > 0) {
                                 for (let i = 0; i < findUser.length; i++) {
-                                        const notificationData = await notification.create({ userId: findUser[i]._id, title: "New Contest", message: "New Contest is add", type: "CONTEST", status: "ACTIVE", })
+                                        const notificationData = await notification.create({ userId: findUser[i]._id, title: "New Contest", body: `New Contest is add contest id ${req.body.contestId}`, type: "CONTEST", status: "ACTIVE", })
                                 }
                                 return res.status(200).json({ status: 200, message: "Contest is add successfully. ", data: Data })
                         } else {
