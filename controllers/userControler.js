@@ -28,6 +28,7 @@ exports.socialLogin = async (req, res) => {
                         req.body.email = email.split(" ").join("").toLowerCase();
                         req.body.socialId = req.body.socialId;
                         req.body.socialType = req.body.socialType;
+                        req.body.refferalCode = await reffralCode();
                         let saveUser = await userModel(req.body).save();
                         if (saveUser) {
                                 var token = jwt.sign({ _id: saveUser._id }, 'DMandir', { expiresIn: '365d' });
@@ -58,6 +59,7 @@ exports.loginWithPhone = async (req, res) => {
                         } else {
                                 const otp = Math.floor(100000 + Math.random() * 900000).toString();
                                 req.body.otp = otp;
+                                req.body.refferalCode = await reffralCode();
                                 const newUser = await userModel.create(req.body);
                                 return res.status(200).send({ status: 200, message: "Login successfully ", data: newUser, });
                         }
@@ -285,3 +287,90 @@ exports.getContests = async (req, res) => {
         }
         return res.status(201).json({ message: "Contest not Found", status: 404, data: {}, });
 };
+exports.updateMusic = async (req, res) => {
+        try {
+                const data = await userModel.findOne({ _id: req.user._id, });
+                if (!data) {
+                        return res.status(400).send({ msg: "not found" });
+                } else {
+                        if (data.music == true) {
+                                const update = await userModel.findByIdAndUpdate({ _id: data._id }, { $set: { music: false } }, { new: true })
+                                return res.status(200).json({ status: 200, message: "Music off.", data: update });
+                        } else {
+                                const update = await userModel.findByIdAndUpdate({ _id: data._id }, { $set: { music: true } }, { new: true })
+                                return res.status(200).json({ status: 200, message: "Music on.", data: update });
+                        }
+                }
+        } catch (err) {
+                return res.status(500).send({ msg: "internal server error ", error: err.message, });
+        }
+};
+exports.updateSound = async (req, res) => {
+        try {
+                const data = await userModel.findOne({ _id: req.user._id, });
+                if (!data) {
+                        return res.status(400).send({ msg: "not found" });
+                } else {
+                        if (data.sound == true) {
+                                const update = await userModel.findByIdAndUpdate({ _id: data._id }, { $set: { sound: false } }, { new: true })
+                                return res.status(200).json({ status: 200, message: "Sound off.", data: update });
+                        } else {
+                                const update = await userModel.findByIdAndUpdate({ _id: data._id }, { $set: { sound: true } }, { new: true })
+                                return res.status(200).json({ status: 200, message: "Sound on.", data: update });
+                        }
+                }
+        } catch (err) {
+                return res.status(500).send({ msg: "internal server error ", error: err.message, });
+        }
+};
+exports.updateLanguage = async (req, res) => {
+        try {
+                const data = await userModel.findOne({ _id: req.user._id, });
+                if (!data) {
+                        return res.status(400).send({ msg: "not found" });
+                } else {
+                        if (data.language == "Hindi") {
+                                const update = await userModel.findByIdAndUpdate({ _id: data._id }, { $set: { language: "English" } }, { new: true })
+                                return res.status(200).json({ status: 200, message: "English language.", data: update });
+                        } else {
+                                const update = await userModel.findByIdAndUpdate({ _id: data._id }, { $set: { language: 'Hindi' } }, { new: true })
+                                return res.status(200).json({ status: 200, message: "Hindi language", data: update });
+                        }
+                }
+        } catch (err) {
+                return res.status(500).send({ msg: "internal server error ", error: err.message, });
+        }
+};
+exports.usedRefferCode = async (req, res) => {
+        try {
+                let findUser1 = await User.findOne({ _id: req.user._id, });
+                if (findUser1) {
+                        if (findUser1.refferalCodeUsed == true) {
+                                const findUser = await User.findOne({ refferalCode: req.body.refferalCode });
+                                if (findUser) {
+                                        req.body.refferUserId = findUser._id;
+                                        let updateWallet = await User.findOneAndUpdate({ _id: findUser._id }, { $push: { joinUser: findUser1._id } }, { new: true });
+                                        let updateWallet1 = await User.findOneAndUpdate({ _id: findUser1._id }, { $set: { refferalCodeUsed: true, refferUserId: findUser._id } }, { new: true });
+                                        return res.status(200).send({ status: 200, message: "Refer code used ", data: updateWallet1, });
+                                } else {
+                                        return res.status(400).send({ msg: "not found" });
+                                }
+                        } else {
+                                return res.status(409).send({ status: 409, message: "Refer code already used", data: {} });
+                        }
+                } else {
+                        return res.status(404).send({ status: 404, message: "Invalid refferal code", data: {} });
+                }
+        } catch (error) {
+                console.error(error);
+                return res.status(500).json({ message: "Server error" });
+        }
+};
+const reffralCode = async () => {
+        var digits = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        let OTP = '';
+        for (let i = 0; i < 9; i++) {
+                OTP += digits[Math.floor(Math.random() * 36)];
+        }
+        return OTP;
+}

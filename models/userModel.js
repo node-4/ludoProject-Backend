@@ -18,6 +18,10 @@ var userSchema = new schema({
         deviceToken: {
                 type: String
         },
+        refferalCode: { type: String, },
+        refferalCodeUsed: { type: Boolean, default: false, },
+        refferUserId: { type: schema.Types.ObjectId, ref: "user" },
+        joinUser: [{ type: schema.Types.ObjectId, ref: "user" }],
         socialId: {
                 type: String
         },
@@ -59,6 +63,18 @@ var userSchema = new schema({
         bonus: {
                 type: Number,
                 default: 0,
+        },
+        language: {
+                type: String,
+                enum: ["Hindi", "English"],
+        },
+        music: {
+                type: Boolean,
+                default: false,
+        },
+        sound: {
+                type: Boolean,
+                default: false,
         },
         userType: {
                 type: String,

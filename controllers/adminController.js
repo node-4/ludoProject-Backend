@@ -3,6 +3,8 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const contest = require("../models/contest");
 const notification = require("../models/notification");
+const helpDesk = require("../models/helpDesk");
+const howToPlay = require("../models/howToPlay");
 exports.registration = async (req, res) => {
         const { mobileNumber, email } = req.body;
         try {
@@ -163,6 +165,97 @@ exports.addBonusTouser = async (req, res) => {
                 } else {
                         const update = await User.findByIdAndUpdate({ _id: data._id }, { $set: { bonus: data.bonus + req.body.bonus } }, { new: true })
                         return res.status(200).json({ status: 200, message: "Contest block now.", data: update });
+                }
+        } catch (err) {
+                return res.status(500).send({ msg: "internal server error ", error: err.message, });
+        }
+};
+exports.AddHowToPlay = async (req, res) => {
+        try {
+                const categories = await howToPlay.findOne({})
+                if (categories) {
+                        let obj = {
+                                description: req.body.description || categories.description,
+                        }
+                        const data1 = await howToPlay.findByIdAndUpdate({ _id: categories._id }, { $set: obj }, { new: true });
+                        if (data1) {
+                                return res.status(200).json({ status: 200, message: "How To Play is add successfully. ", data: data1 })
+                        }
+                } else {
+                        const Data = await howToPlay.create(req.body);
+                        if (Data) {
+                                return res.status(200).json({ status: 200, message: "How To Play is add successfully. ", data: Data })
+                        }
+                }
+        } catch (err) {
+                console.log(err);
+                return res.status(501).send({ status: 501, message: "server error.", data: {}, });
+        }
+};
+exports.getHowToPlay = async (req, res) => {
+        const categories = await howToPlay.findOne({})
+        if (categories) {
+                return res.status(201).json({ message: "How To Play Found", status: 200, data: categories, });
+        }
+        return res.status(201).json({ message: "How To Play not Found", status: 404, data: {}, });
+};
+exports.deleteHowToPlay = async (req, res) => {
+        try {
+                const data = await howToPlay.findOne();
+                if (!data) {
+                        return res.status(400).send({ msg: "not found" });
+                } else {
+                        const data1 = await howToPlay.findByIdAndDelete(data._id);
+                        return res.status(200).json({ status: 200, message: "How To Play delete successfully.", data: {} });
+                }
+        } catch (err) {
+                return res.status(500).send({ msg: "internal server error ", error: err.message, });
+        }
+};
+exports.AddHelpDesk = async (req, res) => {
+        try {
+                const categories = await helpDesk.findOne({})
+                if (categories) {
+                        let obj = {
+                                email: req.body.email || categories.email,
+                                mobileNumber: req.body.mobileNumber || categories.mobileNumber,
+                                whatApp: req.body.whatApp || categories.whatApp
+                        }
+                        const data1 = await helpDesk.findByIdAndUpdate({ _id: categories._id }, { $set: obj }, { new: true });
+                        if (data1) {
+                                return res.status(200).json({ status: 200, message: "How To Play is add successfully. ", data: data1 })
+                        }
+                } else {
+                        let obj = {
+                                email: req.body.email,
+                                mobileNumber: req.body.mobileNumber,
+                                whatApp: req.body.whatApp
+                        }
+                        const Data = await helpDesk.create(obj);
+                        if (Data) {
+                                return res.status(200).json({ status: 200, message: "How To Play is add successfully. ", data: Data })
+                        }
+                }
+        } catch (err) {
+                console.log(err);
+                return res.status(501).send({ status: 501, message: "server error.", data: {}, });
+        }
+};
+exports.getHelpDesk = async (req, res) => {
+        const categories = await helpDesk.findOne({})
+        if (categories) {
+                return res.status(201).json({ message: "How To Play Found", status: 200, data: categories, });
+        }
+        return res.status(201).json({ message: "How To Play not Found", status: 404, data: {}, });
+};
+exports.deleteHelpDesk = async (req, res) => {
+        try {
+                const data = await helpDesk.findOne();
+                if (!data) {
+                        return res.status(400).send({ msg: "not found" });
+                } else {
+                        const data1 = await helpDesk.findByIdAndDelete(data._id);
+                        return res.status(200).json({ status: 200, message: "How To Play delete successfully.", data: {} });
                 }
         } catch (err) {
                 return res.status(500).send({ msg: "internal server error ", error: err.message, });
