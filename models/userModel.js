@@ -4,32 +4,40 @@ const mongoosePaginate = require('mongoose-paginate');
 let mongooseAggregatePaginate = require('mongoose-aggregate-paginate');
 var userSchema = new schema({
         firstName: {
-                type: String
+                type: String,
+                default: ""
         },
         lastName: {
-                type: String
+                type: String,
+                default: ""
         },
         mobileNumber: {
-                type: String
+                type: String,
+                default: ""
         },
         email: {
-                type: String
+                type: String,
+                default: ""
         },
         deviceToken: {
-                type: String
+                type: String,
+                default: ""
         },
         refferalCode: { type: String, },
         refferalCodeUsed: { type: Boolean, default: false, },
         refferUserId: { type: schema.Types.ObjectId, ref: "user" },
         joinUser: [{ type: schema.Types.ObjectId, ref: "user" }],
         socialId: {
-                type: String
+                type: String,
+                default: ""
         },
         socialType: {
-                type: String
+                type: String,
+                default: ""
         },
         otp: {
                 type: String,
+                default: ""
         },
         otpExpiration: {
                 type: Date,
@@ -40,13 +48,15 @@ var userSchema = new schema({
         },
         profilePic: {
                 type: String,
-                default: null
+                default: ""
         },
         password: {
-                type: String
+                type: String,
+                default: ""
         },
         status: {
                 type: String,
+                default: "ACTIVE",
         },
         wallet: {
                 type: Number,
