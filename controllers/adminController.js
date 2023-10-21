@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const contest = require("../models/contest");
 const notification = require("../models/notification");
 const helpDesk = require("../models/helpDesk");
+const howToPlay = require("../models/howPlay");
 
 exports.registration = async (req, res) => {
         const { mobileNumber, email } = req.body;
