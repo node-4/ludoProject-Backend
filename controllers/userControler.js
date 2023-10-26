@@ -1,6 +1,7 @@
 const userModel = require("../models/userModel");
 const contest = require("../models/contest");
 const notification = require("../models/notification");
+const transactionModel = require("../models/transaction");
 const jwt = require("jsonwebtoken");
 exports.socialLogin = async (req, res) => {
         try {
@@ -145,7 +146,7 @@ exports.winnerContest = async (req, res) => {
                 return res.status(200).json({ status: 200, message: 'Winned the contest.' });
         } catch (error) {
                 console.error(error);
-                res.status(500).json({ message: 'Internal server error.' });
+                return res.status(500).json({ message: 'Internal server error.' });
         }
 };
 exports.secondPrizeContest = async (req, res) => {
@@ -220,6 +221,22 @@ exports.lossContestlist = async (req, res) => {
                 res.status(500).json({ message: 'Internal server error.' });
         }
 };
+exports.transactionList = async (req, res) => {
+        try {
+                const user = await userModel.findById({ _id: req.user._id });
+                if (!user) {
+                        return res.status(404).json({ status: 404, message: 'user not found.' });
+                }
+                const findContest = await transactionModel.find({ user: user._id });
+                if (findContest.length == 0) {
+                        return res.status(404).json({ status: 404, message: 'Transaction not found.', });
+                }
+                return res.status(200).json({ status: 200, message: 'Transaction data found.', data: findContest });
+        } catch (error) {
+                console.error(error);
+                res.status(500).json({ message: 'Internal server error.' });
+        }
+};
 exports.notificationList = async (req, res) => {
         try {
                 const user = await userModel.findById({ _id: req.user._id });
@@ -264,7 +281,7 @@ exports.addMoney = async (req, res) => {
 };
 exports.getWallet = async (req, res) => {
         try {
-                const data = await User.findOne({ _id: req.user._id, });
+                const data = await userModel.findOne({ _id: req.user._id, });
                 if (data) {
                         let obj = {
                                 deposite: data.deposite,
@@ -343,14 +360,14 @@ exports.updateLanguage = async (req, res) => {
 };
 exports.usedRefferCode = async (req, res) => {
         try {
-                let findUser1 = await User.findOne({ _id: req.user._id, });
+                let findUser1 = await userModel.findOne({ _id: req.user._id, });
                 if (findUser1) {
                         if (findUser1.refferalCodeUsed == true) {
-                                const findUser = await User.findOne({ refferalCode: req.body.refferalCode });
+                                const findUser = await userModel.findOne({ refferalCode: req.body.refferalCode });
                                 if (findUser) {
                                         req.body.refferUserId = findUser._id;
-                                        let updateWallet = await User.findOneAndUpdate({ _id: findUser._id }, { $push: { joinUser: findUser1._id } }, { new: true });
-                                        let updateWallet1 = await User.findOneAndUpdate({ _id: findUser1._id }, { $set: { refferalCodeUsed: true, refferUserId: findUser._id } }, { new: true });
+                                        let updateWallet = await userModel.findOneAndUpdate({ _id: findUser._id }, { $push: { joinUser: findUser1._id } }, { new: true });
+                                        let updateWallet1 = await userModel.findOneAndUpdate({ _id: findUser1._id }, { $set: { refferalCodeUsed: true, refferUserId: findUser._id } }, { new: true });
                                         return res.status(200).send({ status: 200, message: "Refer code used ", data: updateWallet1, });
                                 } else {
                                         return res.status(400).send({ msg: "not found" });
