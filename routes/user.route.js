@@ -13,6 +13,7 @@ module.exports = (app) => {
         app.get("/api/v1/user/lossContestlist", [authJwt.verifyToken], auth.lossContestlist);
         app.get("/api/v1/user/notificationList", [authJwt.verifyToken], auth.notificationList);
         app.post("/api/v1/user/wallet/addWallet", [authJwt.verifyToken], auth.addMoney);
+        app.post("/api/v1/user/wallet/removeMoney", [authJwt.verifyToken], auth.removeMoney);
         app.get("/api/v1/user/wallet/getwallet", [authJwt.verifyToken], auth.getWallet);
         app.put("/api/v1/user/updateMusic", [authJwt.verifyToken], auth.updateMusic);
         app.put("/api/v1/user/updateSound", [authJwt.verifyToken], auth.updateSound);

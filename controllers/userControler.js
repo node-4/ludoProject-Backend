@@ -262,6 +262,32 @@ exports.addMoney = async (req, res) => {
                 return res.status(501).send({ status: 501, message: "server error.", data: {}, });
         }
 };
+exports.removeMoney = async (req, res) => {
+        try {
+                const data = await userModel.findOne({ _id: req.user._id, });
+                if (data) {
+                        let update = await userModel.findByIdAndUpdate({ _id: data._id }, { $set: { deposite: data.deposite - parseInt(req.body.balance) } }, { new: true });
+                        if (update) {
+                                let obj = {
+                                        user: req.user._id,
+                                        date: Date.now(),
+                                        amount: req.body.balance,
+                                        type: "Debit",
+                                        relatedPayments: "Remove Money"
+                                };
+                                const data1 = await transactionModel.create(obj);
+                                if (data1) {
+                                        return res.status(200).json({ status: 200, message: "Money has been added.", data: update, });
+                                }
+                        }
+                } else {
+                        return res.status(404).json({ status: 404, message: "No data found", data: {} });
+                }
+        } catch (error) {
+                console.log(error);
+                return res.status(501).send({ status: 501, message: "server error.", data: {}, });
+        }
+};
 exports.getWallet = async (req, res) => {
         try {
                 const data = await User.findOne({ _id: req.user._id, });
