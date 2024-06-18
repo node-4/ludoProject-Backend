@@ -8,25 +8,21 @@ const transactionSchema = mongoose.Schema({
                 type: mongoose.Schema.ObjectId,
                 ref: "contest",
         },
-        date: {
-                type: Date,
-                default: Date.now,
-        },
-        amount: {
-                type: Number,
-        },
-        paymentMode: {
-                type: String,
-        },
-        type: {
-                type: String,
-        },
-        relatedPayments: {
-                type: String,
-        },
-        Status: {
-                type: String,
-        },
-});
+        rounds: [{
+                roundNumber: Number,
+                scores: {
+                        you: Number,
+                        right: Number,
+                        top: Number,
+                        left: Number
+                }
+        }],
+        totalScores: {
+                you: Number,
+                right: Number,
+                top: Number,
+                left: Number
+        }
+}, { timestamps: true });
 const transaction = mongoose.model("report", transactionSchema);
 module.exports = transaction;

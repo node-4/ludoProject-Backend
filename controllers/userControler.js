@@ -2,6 +2,7 @@ const userModel = require("../models/userModel");
 const contest = require("../models/contest");
 const notification = require("../models/notification");
 const transactionModel = require("../models/transaction");
+const report = require("../models/report");
 const jwt = require("jsonwebtoken");
 exports.socialLogin = async (req, res) => {
         try {
@@ -103,7 +104,7 @@ exports.joinContest = async (req, res) => {
         try {
                 const findContest = await contest.findById({ _id: req.params.contestId });
                 const user = await userModel.findById({ _id: req.user._id });
-                if (!contest || !user) {
+                if (!findContest || !user) {
                         return res.status(404).json({ status: 404, message: 'Contest or user not found.' });
                 }
                 if (user.deposite < findContest.entryFee) {
@@ -407,6 +408,48 @@ exports.usedRefferCode = async (req, res) => {
         } catch (error) {
                 console.error(error);
                 return res.status(500).json({ message: "Server error" });
+        }
+};
+exports.createReport = async (req, res) => {
+        try {
+                const findContest = await contest.findById({ _id: req.body.contestId });
+                const user = await userModel.findById({ _id: req.body.userId });
+                if (!findContest || !user) {
+                        return res.status(404).json({ status: 404, message: 'Contest or user not found.' });
+                }
+                const findReport = await report.findOne({ contestId: req.body.contestId, user: req.body.userId });
+                if (findReport) {
+                        const Data = await report.findByIdAndUpdate({ _id: findReport._id }, req.body, { new: true });
+                        if (Data) {
+                                return res.status(200).json({ status: 200, message: "Report is update successfully. ", data: Data })
+                        }
+                } else {
+                        const Data = await report.create(req.body);
+                        if (Data) {
+                                return res.status(200).json({ status: 200, message: "Report is add successfully. ", data: Data })
+                        }
+                }
+        } catch (error) {
+                console.error(error);
+                res.status(500).json({ message: 'Internal server error.' });
+        }
+};
+exports.getReport = async (req, res) => {
+        try {
+                const findContest = await contest.findById({ _id: req.query.contestId });
+                const user = await userModel.findById({ _id: req.query.userId });
+                if (!findContest || !user) {
+                        return res.status(404).json({ status: 404, message: 'Contest or user not found.' });
+                }
+                const findReport = await report.findOne({ contestId: req.body.contestId, user: req.body.userId });
+                if (findReport) {
+                        return res.status(200).json({ status: 200, message: "Report is update successfully. ", data: findReport })
+                } else {
+                        return res.status(404).json({ status: 404, message: "Report not found. ", data: {} })
+                }
+        } catch (error) {
+                console.error(error);
+                res.status(500).json({ message: 'Internal server error.' });
         }
 };
 const reffralCode = async () => {

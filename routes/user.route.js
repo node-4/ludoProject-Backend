@@ -20,4 +20,6 @@ module.exports = (app) => {
         app.put("/api/v1/user/updateSound", [authJwt.verifyToken], auth.updateSound);
         app.put("/api/v1/user/updateLanguage", [authJwt.verifyToken], auth.updateLanguage);
         app.post("/api/v1/user/used/RefferCode", [authJwt.verifyToken], auth.usedRefferCode);
+        app.post("/api/v1/user/Report/createReport", [authJwt.verifyToken], auth.createReport);
+        app.get("/api/v1/user/Report/getReport", [authJwt.verifyToken], auth.getReport);
 }
